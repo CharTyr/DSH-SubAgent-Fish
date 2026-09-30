@@ -169,3 +169,6 @@ SVG 里烘焙了 SMIL 动画，GIF 是同一批帧的栅格版 —— README 顶
 有一处例外：`preview/dsh-theme.css` 是从 DSH 自己的主题包里原样提取的，而 DSH 以 **MIT** 发布。
 所以那一份文件仍按 MIT 分发，**不受本仓库协议约束** —— 完整声明见
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+## Friendly Links
+[LINUX DO](https://linux.do/)
