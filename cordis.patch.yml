@@ -1,0 +1,14 @@
+# dsh-subagent-fish bundle patch.
+#
+# Installed as a bundle, `dsh plugin --profile <name> add` sees this declaration
+# and appends the package to the profile's bundle stack, so the single row
+# below is merged at boot — one row mounts BOTH halves: the (empty) node half
+# and the browser half discovered through package.json's `dsh.client`.
+#
+# Mount it AFTER dsh-better-sidebar: this plugin's sidebar page registers
+# itself through that package's public `betterSidebar` service, so the service
+# must exist first. (If it does not, the page simply never registers and the
+# right-sidebar tab fish keep working.)
+- insert:
+    - id: subagent-fish
+      name: 'dsh-subagent-fish'

@@ -1,0 +1,6 @@
+# macOS / exFAT resource forks and metadata
+._*
+.DS_Store
+
+# nothing here is installed from npm; the profile links to this directory
+node_modules/

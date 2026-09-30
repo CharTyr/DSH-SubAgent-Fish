@@ -1,0 +1,50 @@
+{
+  "name": "dsh-subagent-fish",
+  "version": "0.1.0",
+  "private": true,
+  "description": "给 DSH 的子代理一条会游动的小鱼：右侧栏的子代理标签，以及 dsh-better-sidebar 里的子代理树页面。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
+      ],
+      "platform": "web"
+    },
+    "manifestVersion": 1
+  },
+  "files": [
+    "lib",
+    "src",
+    "tools",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4",
+    "react": "^18.2.0"
+  },
+  "scripts": {
+    "build": "node tools/sync-engine.mjs && node tools/build-client.mjs",
+    "test": "node tools/test-client.mjs",
+    "preview": "node preview/build.mjs"
+  },
+  "license": "MIT"
+}

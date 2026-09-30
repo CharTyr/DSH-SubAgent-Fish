@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>子代理小鱼头像 · 预览</title>
+<style>/*__THEME__*/</style>
+<style>
+/* ===================================================================
+   小鱼头像。这段 .fish-avatar 与将来插件里的 fish.module.css 保持同源，
+   差别只在文件末尾标了「仅供预览」的几行。
+   =================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: var(--dsw-font-family);
+  font-size: var(--dsw-font-s-14-font-size, 14px);
+  line-height: 1.5;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-bg-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+.fish-avatar {
+  /* --fish-size 就是鱼本身的尺寸；不画圆、不填底色，鱼直接落在面板上 */
+  --fish-size: 24px;
+  --fish-hex: var(--dsw-alias-brand-primary);
+  position: relative;
+  flex: none;
+  width: calc(var(--fish-size) * 1.16);
+  height: calc(var(--fish-size) * 1.16);
+  font-size: var(--fish-size);
+  display: grid;
+  place-items: center;
+  transition: opacity .25s ease, filter .25s ease;
+}
+.fish-avatar > svg { display: block; width: 1.16em; height: 1.16em; }
+/* 引擎把鱼画在 100×100 画布中央、占 84%，所以要 1.16 倍才刚好铺满盒子 */
+
+
+/* 状态只靠鱼自己的明暗表达，不额外加圈：
+   运行中 = 原色；已完成 = 收敛变淡；失败 = 去色。 */
+.fish-avatar[data-state="done"] > svg { opacity: .72; }
+.fish-avatar[data-state="failed"] > svg { filter: saturate(.18); opacity: .5; }
+
+/* 可选：极细的深色描边。只为在深色底上把深色鱼从背景里分出来，默认关闭。 */
+.fish-avatar[data-rim="on"] > svg {
+  filter: drop-shadow(0 0 .55px rgba(0, 0, 0, .8)) drop-shadow(0 0 .55px rgba(0, 0, 0, .5));
+}
+
+/* ---------- 预览页框架 ---------- */
+.page { max-width: 1200px; margin: 0 auto; padding: 30px 24px 90px; }
+h1 { font-size: var(--dsw-font-l-20-font-size, 20px); font-weight: 500; margin: 0 0 6px; }
+.lede { color: var(--dsw-alias-label-tertiary); font-size: var(--dsw-font-xs-13-font-size, 13px); margin: 0; }
+
+.controls {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+  margin: 18px -24px 26px; padding: 12px 24px;
+  background: color-mix(in srgb, var(--dsw-alias-bg-base) 90%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--dsw-alias-border-l1);
+}
+.control { display: flex; align-items: center; gap: 8px; font-size: var(--dsw-font-xs-13-font-size, 13px); color: var(--dsw-alias-label-secondary); }
+.control input[type=range] { width: 110px; accent-color: var(--dsw-alias-brand-primary); }
+.control output { font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-primary); min-width: 42px; }
+.seg { display: inline-flex; border: 1px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-md); overflow: hidden; }
+.seg button { font: inherit; font-size: var(--dsw-font-xxs-12-font-size, 12px); padding: 4px 11px; border: 0; cursor: pointer; color: var(--dsw-alias-label-secondary); background: transparent; }
+.seg button + button { border-left: 1px solid var(--dsw-alias-border-l2); }
+.seg button[aria-pressed=true] { background: var(--dsw-alias-interactive-bg-active); color: var(--dsw-alias-label-primary); }
+
+section.scene { margin-bottom: 36px; }
+.scene > h2 { font-size: var(--dsw-font-s-14-font-size, 14px); font-weight: 500; margin: 0 0 4px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.scene > h2 code { font-size: var(--dsw-font-xxxs-11-font-size, 11px); color: var(--dsw-alias-label-caption); font-weight: 400; background: var(--dsw-alias-bg-layer-2); padding: 1px 6px; border-radius: var(--dsw-radius-sm); }
+.scene > p { margin: 0 0 12px; color: var(--dsw-alias-label-tertiary); font-size: var(--dsw-font-xs-13-font-size, 13px); }
+.stage { background: var(--dsw-alias-bg-layer-1); border: 1px solid var(--dsw-alias-border-l1); border-radius: var(--dsw-radius-lg); padding: 16px; }
+
+.panel { background: var(--dsw-alias-bg-layer-2); border: 1px solid var(--dsw-alias-border-l1); border-radius: var(--dsw-radius-md); }
+.muted { color: var(--dsw-alias-label-tertiary); }
+.caption { color: var(--dsw-alias-label-caption); font-size: var(--dsw-font-xxs-12-font-size, 12px); }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex: none; display: inline-block; }
+.dot[data-s=running] { background: var(--dsw-alias-state-business-primary); }
+.dot[data-s=done]    { background: var(--dsw-alias-state-success-primary); }
+.dot[data-s=failed]  { background: var(--dsw-alias-state-error-primary); }
+.chip { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: var(--dsw-font-xxxs-11-font-size, 11px); line-height: 1; padding: 3px 7px; border-radius: 999px; color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-bg-layer-3); border: 1px solid var(--dsw-alias-border-l1); }
+.trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* B */
+.header-bar { display: flex; align-items: center; gap: 10px; padding: 9px 13px; }
+.crumb { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.crumb .name { font-size: var(--dsw-font-s-14-font-size, 14px); font-weight: 500; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
+
+/* C */
+.catalog-btn { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 6px; border-radius: var(--dsw-radius-md); border: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-layer-2); font: inherit; font-size: var(--dsw-font-xs-13-font-size, 13px); color: var(--dsw-alias-label-primary); cursor: pointer; }
+.catalog-menu { width: 392px; padding: 6px; box-shadow: var(--dsw-elevation-prominent); }
+.catalog-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: var(--dsw-radius-sm); }
+.catalog-row > .fish-avatar { margin-top: -1px; }
+.catalog-row:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.catalog-row .body { min-width: 0; flex: 1; }
+.catalog-row .title { display: flex; align-items: center; gap: 7px; min-height: 20px; font-size: var(--dsw-font-xs-13-font-size, 13px); }
+.catalog-row .sub { margin-top: 1px; font-size: var(--dsw-font-xxs-12-font-size, 12px); color: var(--dsw-alias-label-tertiary); }
+
+/* D */
+.rightbar { display: grid; grid-template-columns: 176px 1fr; overflow: hidden; }
+.rightbar-side { border-right: 1px solid var(--dsw-alias-border-l1); padding: 8px; background: var(--dsw-alias-bg-layer-1); }
+.rightbar-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--dsw-radius-sm); font-size: var(--dsw-font-xs-13-font-size, 13px); color: var(--dsw-alias-label-secondary); }
+.rightbar-item[data-active=true] { background: var(--dsw-alias-interactive-bg-active); color: var(--dsw-alias-label-primary); }
+.rightbar-main { padding: 11px 13px; min-width: 0; }
+.tabstrip { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--dsw-alias-border-l1); padding-bottom: 9px; margin-bottom: 11px; }
+.tab-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 999px; border: 1px solid transparent; font-size: var(--dsw-font-xxs-12-font-size, 12px); color: var(--dsw-alias-label-secondary); }
+.tab-pill[data-active=true] { border-color: var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); }
+
+/* E */
+.tree { padding: 13px; }
+.tree-node { position: relative; }
+.tree-node + .tree-node { margin-top: 8px; }
+.tree-children { margin-left: 16px; padding-left: 18px; border-left: 1px solid var(--dsw-alias-border-l2); }
+.tree-card { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--dsw-alias-bg-layer-2); border: 1px solid var(--dsw-alias-border-l1); border-radius: var(--dsw-radius-md); }
+.tree-card[data-current=true] { border-color: var(--dsw-alias-brand-primary); }
+.tree-card .body { min-width: 0; flex: 1; }
+.tree-card .title { display: flex; align-items: center; gap: 8px; font-size: var(--dsw-font-xs-13-font-size, 13px); }
+.tree-card .sub { margin-top: 2px; font-size: var(--dsw-font-xxs-12-font-size, 12px); color: var(--dsw-alias-label-tertiary); }
+.tree-children > .tree-node::before { content: ""; position: absolute; left: -18px; top: 22px; width: 14px; height: 1px; background: var(--dsw-alias-border-l2); }
+
+/* 「只看鱼」：把模拟界面的外壳（面板底色、边框、分隔线）全部去掉，
+   这样能直接看清鱼本身在纯色背景上的样子。 */
+body[data-shell="off"] .stage,
+body[data-shell="off"] .panel,
+body[data-shell="off"] .catalog-menu,
+body[data-shell="off"] .tree-card,
+body[data-shell="off"] .gallery-cell,
+body[data-shell="off"] .rightbar-side,
+body[data-shell="off"] .header-bar,
+body[data-shell="off"] .tab-pill[data-active=true],
+body[data-shell="off"] .catalog-btn {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+body[data-shell="off"] .rightbar-side,
+body[data-shell="off"] .rightbar-main,
+body[data-shell="off"] .tabstrip { border-color: transparent !important; }
+body[data-shell="off"] .tree-children { border-left-color: transparent !important; }
+body[data-shell="off"] .tree-children > .tree-node::before { background: transparent !important; }
+
+/* 画廊 */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.gallery-cell { display: flex; align-items: center; gap: 10px; padding: 9px 11px; background: var(--dsw-alias-bg-layer-2); border: 1px solid var(--dsw-alias-border-l1); border-radius: var(--dsw-radius-md); min-width: 0; }
+.gallery-cell .meta { min-width: 0; flex: 1; }
+.gallery-cell .meta b { display: block; font-weight: 500; font-size: var(--dsw-font-xxs-12-font-size, 12px); }
+.size-row { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--dsw-alias-border-l2); }
+.size-cell { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.note { margin-top: 18px; padding: 12px 14px; border-radius: var(--dsw-radius-md); background: var(--dsw-alias-bg-layer-2); border: 1px solid var(--dsw-alias-border-l1); color: var(--dsw-alias-label-tertiary); font-size: var(--dsw-font-xxs-12-font-size, 12px); }
+.note b { color: var(--dsw-alias-label-secondary); font-weight: 500; }
+</style>
+</head>
+<body data-ds-dark-theme>
+<div class="page">
+  <header>
+    <h1>子代理小鱼头像 · 预览</h1>
+    <p class="lede">每条鱼由子代理的 ID 决定：同一个子代理永远是同一条鱼；不同子代理自然分成不同的鱼、颜色与花纹。</p>
+  </header>
+
+  <div class="controls">
+    <label class="control">鱼的大小
+      <input id="size" type="range" min="16" max="40" step="2" value="24">
+      <output id="size-out">24px</output>
+    </label>
+    <div class="control">描边
+      <span class="seg" id="rim">
+        <button data-v="on" aria-pressed="false">开</button>
+        <button data-v="off" aria-pressed="true">关</button>
+      </span>
+    </div>
+    <div class="control">界面外壳
+      <span class="seg" id="shell">
+        <button data-v="on" aria-pressed="true">显示</button>
+        <button data-v="off" aria-pressed="false">只看鱼</button>
+      </span>
+    </div>
+    <div class="control">主题
+      <span class="seg" id="theme">
+        <button data-v="dark" aria-pressed="true">深色</button>
+        <button data-v="light" aria-pressed="false">浅色</button>
+      </span>
+    </div>
+    <div class="control">动画
+      <span class="seg" id="motion">
+        <button data-v="on" aria-pressed="true">游动</button>
+        <button data-v="off" aria-pressed="false">静止</button>
+      </span>
+    </div>
+    <span class="caption" id="rm-note"></span>
+  </div>
+
+  <section class="scene">
+    <h2>B · 子代理会话标题栏 <code>conversation.session.header.lineage</code> <span class="chip" style="color:var(--dsw-alias-label-caption)">已暂缓</span></h2>
+    <p>点进某个子代理的会话时，标题栏左侧显示它是从哪来的。<b>本轮不做</b> —— 要顶掉 DSH 自己的 CatalogDropdown。</p>
+    <div class="stage">
+      <div class="panel header-bar">
+        <span class="muted" style="font-size:15px">←</span>
+        <div class="crumb">
+          <span class="name muted">主会话</span>
+          <span class="muted">/</span>
+          <span class="fish-avatar" data-fish="sub-1" data-state="running" style="--fish-size:30px"></span>
+          <span class="name trunc">调研 DSH 插件开发文档</span>
+        </div>
+        <div class="header-actions">
+          <span class="chip">子代理</span>
+          <span class="caption">deepseek-v4.1-flash</span>
+          <span class="muted">⋯</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <h2>C · 子代理目录 <code>conversation.session.header.actions → subagent-catalog</code> <span class="chip" style="color:var(--dsw-alias-label-caption)">已暂缓</span></h2>
+    <p>标题栏右侧的「子代理」按钮，展开后是这棵树上的全部子代理。<b>本轮不做</b> —— 同上。</p>
+    <div class="stage">
+      <div class="panel header-bar" style="margin-bottom:12px">
+        <span class="fish-avatar" data-fish="main" data-state="running" style="--fish-size:30px"></span>
+        <span class="name trunc" style="font-size:var(--dsw-font-s-14-font-size,14px);font-weight:500">主会话 · 做一个 DSH 小鱼插件</span>
+        <div class="header-actions">
+          <button class="catalog-btn"><span class="fish-avatar" data-fish="main" data-state="running" style="--fish-size:24px"></span>子代理 <span class="chip">3</span></button>
+          <span class="muted">⋯</span>
+        </div>
+      </div>
+      <div class="panel catalog-menu" style="margin:0">
+        <div class="catalog-row">
+          <span class="fish-avatar" data-fish="sub-1" data-state="running" style="--fish-size:26px"></span>
+          <div class="body">
+            <div class="title"><span class="dot" data-s="running"></span><span class="trunc">调研 DSH 插件开发文档</span></div>
+            <div class="sub trunc">正在读取 docs/user/develop/basic/index.md</div>
+          </div>
+        </div>
+        <div class="catalog-row">
+          <span class="fish-avatar" data-fish="sub-2" data-state="done" style="--fish-size:26px"></span>
+          <div class="body">
+            <div class="title"><span class="dot" data-s="done"></span><span class="trunc">把插件装进 web profile</span></div>
+            <div class="sub trunc">已完成 · 用时 1 分 12 秒</div>
+          </div>
+        </div>
+        <div class="catalog-row">
+          <span class="fish-avatar" data-fish="sub-3" data-state="failed" style="--fish-size:26px"></span>
+          <div class="body">
+            <div class="title"><span class="dot" data-s="failed"></span><span class="trunc">校对四处的视觉一致性</span></div>
+            <div class="sub trunc">失败 · 截图超时</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <h2>D · 右侧栏的子代理标签 <code>sidebar.right.pane.tab</code></h2>
+    <p>每个子代理对话是一个标签页，标签上带自己的小鱼。</p>
+    <div class="stage">
+      <div class="panel rightbar">
+        <div class="rightbar-side">
+          <div class="rightbar-item">🗂 文件</div>
+          <div class="rightbar-item">± 变更</div>
+          <div class="rightbar-item" data-active="true"><span class="fish-avatar" data-fish="sub-1" data-state="running" style="--fish-size:24px"></span>子代理</div>
+          <div class="rightbar-item">›_ 终端</div>
+        </div>
+        <div class="rightbar-main">
+          <div class="tabstrip">
+            <span class="tab-pill" data-active="true"><span class="fish-avatar" data-fish="sub-1" data-state="running" style="--fish-size:24px"></span>调研文档</span>
+            <span class="tab-pill"><span class="fish-avatar" data-fish="sub-2" data-state="done" style="--fish-size:24px"></span>安装插件</span>
+            <span class="tab-pill"><span class="fish-avatar" data-fish="sub-3" data-state="failed" style="--fish-size:24px"></span>校对视觉</span>
+            <span class="muted" style="margin-left:auto">＋</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="fish-avatar" data-fish="sub-1" data-state="running" style="--fish-size:32px"></span>
+            <div style="min-width:0">
+              <div class="trunc" style="font-size:var(--dsw-font-s-14-font-size,14px);font-weight:500">调研 DSH 插件开发文档</div>
+              <div class="caption">子代理 · deepseek-v4.1-flash · 运行中</div>
+            </div>
+          </div>
+          <p class="muted" style="margin:13px 0 0;font-size:var(--dsw-font-xs-13-font-size,13px)">
+            正在读取 <code>docs/user/develop/basic/index.md</code>，随后整理 slots 的用法。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <h2>E · better-sidebar 的子代理树 <code>ctx.betterSidebar.registerTab()</code></h2>
+    <p>装了 dsh-better-sidebar 时，用它的公开接口注册一个带小鱼的子代理页面；没装时这一段自动隐藏，不影响其他三处。</p>
+    <div class="stage">
+      <div class="panel tree">
+        <div class="tree-node">
+          <div class="tree-card">
+            <span class="fish-avatar" data-fish="main" data-state="running" style="--fish-size:32px"></span>
+            <div class="body">
+              <div class="title"><span class="dot" data-s="running"></span><b style="font-weight:500">主会话 · 做一个 DSH 小鱼插件</b></div>
+              <div class="sub trunc">正在调度 3 个子代理</div>
+            </div>
+          </div>
+          <div class="tree-children">
+            <div class="tree-node">
+              <div class="tree-card" data-current="true">
+                <span class="fish-avatar" data-fish="sub-1" data-state="running" style="--fish-size:30px"></span>
+                <div class="body">
+                  <div class="title"><span class="dot" data-s="running"></span><b style="font-weight:500">调研 DSH 插件开发文档</b><span class="chip">运行中</span></div>
+                  <div class="sub trunc">正在读取 docs/user/develop/basic/index.md · 刚调用 read</div>
+                </div>
+              </div>
+              <div class="tree-children">
+                <div class="tree-node">
+                  <div class="tree-card">
+                    <span class="fish-avatar" data-fish="sub-1-1" data-state="done" style="--fish-size:26px"></span>
+                    <div class="body">
+                      <div class="title"><span class="dot" data-s="done"></span><b style="font-weight:500">抓取 slots 章节</b><span class="chip">已完成</span></div>
+                      <div class="sub trunc">已返回 1 段摘录</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-card">
+                <span class="fish-avatar" data-fish="sub-2" data-state="done" style="--fish-size:30px"></span>
+                <div class="body">
+                  <div class="title"><span class="dot" data-s="done"></span><b style="font-weight:500">把插件装进 web profile</b><span class="chip">已完成</span></div>
+                  <div class="sub trunc">用时 1 分 12 秒</div>
+                </div>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-card">
+                <span class="fish-avatar" data-fish="sub-3" data-state="failed" style="--fish-size:30px"></span>
+                <div class="body">
+                  <div class="title"><span class="dot" data-s="failed"></span><b style="font-weight:500">校对四处的视觉一致性</b><span class="chip">已失败</span></div>
+                  <div class="sub trunc">截图超时</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <h2>鱼的分布</h2>
+    <p>十二个子代理 ID 各自分到的鱼。每条都同时给出「列表里的大小」和「放大后的样子」。</p>
+    <div class="gallery" id="gallery"></div>
+    <div class="size-row" id="sizes"></div>
+    <div class="note">
+      <b>说明</b> —— 花纹和鱼形不是固定套餐：每个轴都由独立种子生成，所以换花纹不会改鱼身，同一条鱼也永远长得一样。
+      白色眼睛始终画在花纹上层；系统开启「减少动态效果」时，鱼会停在原地不游。头像不画圆、不加底色 —— 鱼直接落在界面上。
+    </div>
+  </section>
+</div>
+
+<script>
+/*__ENGINE__*/
+
+/*__IDENTITY__*/
+
+/* ---------------- 预览页逻辑（不属于插件） ---------------- */
+(function () {
+  /** 把一个 .fish-avatar 占位元素画成小鱼。 */
+  function paint(el) {
+    const identity = fishIdentity(el.dataset.fish)
+    const size = parseFloat(getComputedStyle(el).getPropertyValue('--fish-size')) || 24
+    el.style.setProperty('--fish-hex', identity.hex)
+    el.title = identityLabel(identity)
+    // SVG 的像素尺寸给足，靠 CSS 缩放到目标大小，这样放大时线条依旧平滑
+    el.innerHTML = fishSvg(identity.seed, {
+      size: Math.round(size * 2),
+      pattern: identity.pattern,
+      patternSeed: identity.patternSeed,
+      strength: identity.strength,
+    })
+    el.dataset.rim = el.dataset.rim || 'off'
+  }
+  const paintAll = () => document.querySelectorAll('.fish-avatar[data-fish]').forEach(paint)
+
+  const STORY = [
+    ['sub-1', '调研 DSH 插件开发文档'], ['sub-2', '把插件装进 web profile'],
+    ['sub-3', '校对四处的视觉一致性'], ['sub-4', '生成小鱼花纹'],
+    ['sub-5', '读 MaiWork 画鱼引擎'], ['sub-6', '整理 slots 用法'],
+    ['sub-7', '写离线预览页'], ['sub-8', '验证减少动态效果'],
+    ['sub-9', '检查暗色对比度'], ['sub-10', '补 README'],
+    ['sub-11', '跑回归测试'], ['sub-12', '打包成可安装插件'],
+  ]
+  document.getElementById('gallery').innerHTML = STORY.map(([id, label]) => {
+    const identity = fishIdentity(id)
+    return `<div class="gallery-cell">
+      <span class="fish-avatar" data-fish="${id}" style="--fish-size:26px"></span>
+      <div class="meta"><b class="trunc">${label}</b><span class="caption">${identityLabel(identity)}</span></div>
+      <span class="fish-avatar" data-fish="${id}" style="--fish-size:52px"></span>
+    </div>`
+  }).join('')
+  document.getElementById('sizes').innerHTML = [16, 20, 24, 28, 32, 40].map((s) =>
+    `<div class="size-cell"><span class="fish-avatar" data-fish="sub-1" style="--fish-size:${s}px"></span><span class="caption">${s}px</span></div>`).join('')
+
+  paintAll()
+
+  const size = document.getElementById('size')
+  const sizeOut = document.getElementById('size-out')
+  size.addEventListener('input', () => {
+    sizeOut.textContent = size.value + 'px'
+    document.querySelectorAll('.stage .fish-avatar').forEach((el) => el.style.setProperty('--fish-size', size.value + 'px'))
+    paintAll()
+  })
+
+  /** 单选按钮组：点中的那个 aria-pressed=true。 */
+  function group(id, apply) {
+    document.getElementById(id).addEventListener('click', (e) => {
+      const button = e.target.closest('button'); if (!button) return
+      document.querySelectorAll('#' + id + ' button').forEach((b) => b.setAttribute('aria-pressed', String(b === button)))
+      apply(button.dataset.v)
+    })
+  }
+  group('rim',   (v) => document.querySelectorAll('.fish-avatar').forEach((el) => { el.dataset.rim = v }))
+  group('shell', (v) => { document.body.dataset.shell = v })
+  group('theme', (v) => {
+    // DSH 把暗色开关放在 <body> 上：body[data-ds-dark-theme] 才是覆盖层
+    if (v === 'dark') document.body.setAttribute('data-ds-dark-theme', '')
+    else document.body.removeAttribute('data-ds-dark-theme')
+  })
+
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  document.getElementById('rm-note').textContent = reduced ? '（系统当前开启了「减少动态效果」）' : ''
+  group('motion', (v) => {
+    globalThis.fishPaused = v === 'off'
+    if (reduced) globalThis.__forceMotion = v === 'on'
+    if (v === 'on') paintAll()
+  })
+
+  // 预览专用：绕开系统的「减少动态效果」，好让鱼真的游起来看看
+  if (reduced) {
+    const original = window.matchMedia.bind(window)
+    window.matchMedia = (query) => (globalThis.__forceMotion && query.includes('prefers-reduced-motion')
+      ? { matches: false, media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }
+      : original(query))
+  }
+})();
+</script>
+</body>
+</html>
