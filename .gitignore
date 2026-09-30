@@ -4,3 +4,6 @@
 
 # nothing here is installed from npm; the profile links to this directory
 node_modules/
+
+# scratch page tools/build-logo.mjs writes while rasterising
+.logo-render.html
