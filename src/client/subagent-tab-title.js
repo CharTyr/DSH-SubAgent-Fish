@@ -14,6 +14,12 @@
 
 /** 子代理对话标签的类型 id（= dsh-client-ui-subagent 的注册 id）。 */
 const SUBAGENT_CHAT_TAB_ID = '@deepseek-ai/dsh-client-ui-subagent'
+/**
+ * 标签上那颗鱼多大（px）。想调大小就改这里。
+ * 标签本身约 28px 高、字 12px，所以别调太大。
+ */
+const TAB_FISH_SIZE = 20
+
 /** 子代理对话地址的前缀；后半段就是子会话 id。 */
 const SUBAGENT_CHAT_PREFIX = 'dsh-resource://subagentchat/session/'
 
@@ -49,7 +55,7 @@ function SubagentFishTabTitle(props) {
   return React.createElement(
     'span',
     { className: 'dsf-chip' },
-    React.createElement(FishAvatar, { id: childId, size: 16, state: running === true ? 'running' : undefined }),
+    React.createElement(FishAvatar, { id: childId, size: TAB_FISH_SIZE, state: running === true ? 'running' : undefined }),
     React.createElement('span', { className: 'dsf-label' }, tab.title),
   )
 }

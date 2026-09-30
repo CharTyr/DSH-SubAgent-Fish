@@ -12,6 +12,12 @@
 // 本文件由 tools/build-client.mjs 与其它源码拼进 lib/client.js，共用同一个作用域。
 // ---------------------------------------------------------------------------
 
+/**
+ * 挂在别人行上的那颗鱼多大（px）。想调大小就改这里 —— 它是唯一的一处。
+ * 参照物：better-sidebar 的行里，标签 13px、状态点 7px、整行约 32px 高。
+ */
+const ROW_FISH_SIZE = 26
+
 /** 注入样式用的 tag 标识（与 DSH 自己的插件同一套做法，便于去重）。 */
 const FISH_CSS_TAG = 'dsh-subagent-fish/fish.css'
 
@@ -60,7 +66,7 @@ body:not([data-ds-dark-theme]) .dsf-avatar[data-halo="both"] > svg {
   flex: none;
   margin-right: 2px;
 }
-.dsf-row-fish > svg { display: block; width: 20px; height: 20px; }
+.dsf-row-fish > svg { display: block; width: ${ROW_FISH_SIZE}px; height: ${ROW_FISH_SIZE}px; }
 .dsf-row-fish[data-dsf-state="done"] > svg { opacity: .8; }
 
 .dsf-page { display: flex; flex-direction: column; gap: 10px; padding: 12px 10px; font-size: 13px; color: var(--dsw-alias-label-primary); }

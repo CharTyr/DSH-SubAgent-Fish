@@ -276,8 +276,14 @@ check('the markup really is a fish', first.includes('fish-body') && first.includ
 check('a running subagent\'s fish carries the swim hooks', first.includes('fish-swim') && first.includes('data-fish-id'))
 check('a finished subagent\'s fish carries none, so it stays still',
   !markupFor('child-a', false).includes('fish-swim') && !markupFor('child-a', false).includes('data-fish-id'))
+// The two renderings must differ ONLY in the motion hooks. The clip id is a
+// per-call serial, so it has to be normalised too — it says nothing about the fish.
+const withoutMotion = (markup) => markup
+  .replace(/ fish-swim/g, '')
+  .replace(/ data-fish-id="\d+"/g, '')
+  .replace(/pattern-clip-\d+/g, 'pattern-clip-N')
 check('both states draw the same fish, only the motion differs',
-  markupFor('child-a', true).replace(/ fish-swim| data-fish-id="\d+"/g, '') === markupFor('child-a', false))
+  withoutMotion(markupFor('child-a', true)) === withoutMotion(markupFor('child-a', false)))
 check('a patterned fish carries its clipped markings', first.includes('fish-clip') || first.includes('fish-mark') === false)
 
 console.log(failures === 0 ? '\nall checks passed' : `\n${failures} check(s) failed`)
