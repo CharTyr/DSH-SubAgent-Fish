@@ -14,25 +14,10 @@
 
 ---
 
-## 它长什么样
+## 样图
 
-<div align="center">
-<img src="preview/shots/plugin-real-output.png" width="88%" alt="右侧栏子代理标签与 better-sidebar 子代理页" />
-</div>
+<img width="1154" height="759" alt="image" src="https://github.com/user-attachments/assets/6d7f1f84-ab15-48ed-a3f9-d8e065f75683" />
 
-上面这张不是设计稿，是**插件本体渲染出来的**：把 `lib/client.js` 按 DSH 客户端加载器的规则跑起来，
-抓住它真正注入的样式和真正注册的组件，用一份真实形状的会话列表渲染的结果。
-
-<div align="center">
-<img src="preview/shots/dark-de.png" width="88%" alt="在界面里的样子" />
-</div>
-
-<div align="center">
-<img src="preview/shots/dark-gallery.png" width="88%" alt="十二个子代理各自的鱼" />
-</div>
-
-鱼不是图片，是现场用 SVG 画出来的。花纹也不是固定款式：每个轴都由独立种子生成，
-换花纹不会改鱼身。
 
 ## 安装
 
