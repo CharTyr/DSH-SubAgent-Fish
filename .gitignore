@@ -12,6 +12,7 @@ node_modules/
 # tools/render-preview.mjs, deliberately not published
 preview/index.html
 preview/plugin-render.html
+preview/swim-check.html
 
 # rendered screenshots — the README hosts its images as GitHub attachments,
 # so these are local scratch only (regenerate: tools/render-preview.mjs + Chrome)
