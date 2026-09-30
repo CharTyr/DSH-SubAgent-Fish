@@ -161,14 +161,9 @@ SVG 里烘焙了 SMIL 动画，GIF 是同一批帧的栅格版 —— README 顶
 
 ## 许可
 
-**[PolyForm Noncommercial License 1.0.0](LICENSE)** —— 非商业用途随便用：个人研究、实验、
-私人娱乐、爱好项目、教学、慈善与公共机构等，都算「许可用途」；商业用途不行。
+**[PolyForm Noncommercial License 1.0.0](LICENSE)**
 
-需要留意的是，**这不是 OSI 认可的开源协议**，属于 source-available。要商业授权请联系作者。
-
-有一处例外：`preview/dsh-theme.css` 是从 DSH 自己的主题包里原样提取的，而 DSH 以 **MIT** 发布。
-所以那一份文件仍按 MIT 分发，**不受本仓库协议约束** —— 完整声明见
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+`preview/dsh-theme.css` 是从 DSH 自己的主题包里原样提取的，而 DSH 以 **MIT** 发布。该文件仍按 MIT 分发，**不受本仓库协议约束**
 
 ## Friendly Links
 [LINUX DO](https://linux.do/)
