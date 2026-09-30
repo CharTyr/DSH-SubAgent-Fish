@@ -4,9 +4,10 @@
 
 # DSH SubAgent Fish
 
-**给 DSH 的每个子代理一条会游动的小鱼**
+**给 DSH 的每个子代理一条会游动的小鱼头像**
 
 同一条鱼由子代理的 ID 决定 —— 同一个子代理永远是同一条鱼，不同子代理自然分成不同的鱼形、颜色与花纹。
+哦——小鱼————！
 
 `PolyForm Noncommercial 1.0.0` · 非商业使用 · [LICENSE](LICENSE)
 
@@ -134,30 +135,6 @@ dsh plugin --profile web remove dsh-subagent-fish
 
 整条插件**没有主机侧逻辑**：鱼的身份是子代理 id 的纯函数，数据本来就在客户端。
 
-## 开发
-
-```bash
-node tools/sync-engine.mjs      # 从上游画鱼源码重新生成 src/fish/engine.js
-node tools/sync-engine.mjs --check
-node tools/build-client.mjs     # 生成 lib/client.js 与 lib/index.js
-node tools/test-client.mjs      # 对已构建的 lib/client.js 跑 43 项检查
-node tools/build-logo.mjs       # 生成 logo.svg / logo.png / logo.gif
-node tools/render-preview.mjs   # 把插件真实输出渲染成一个本地 HTML
-node preview/build.mjs          # 生成离线预览页（本地用，不发布）
-```
-
-`src/fish/engine.js` 是**生成文件**，由 `tools/sync-engine.mjs` 从
-[MaiWork](https://github.com/CharTyr/MaiWork) 的正式画鱼源码加上「花纹」与「暂停」两项能力后生成，
-和控制台里正式用的鱼是同一份代码。上游一改，生成脚本会直接报错，而不是悄悄产出走样的版本。
-
-`logo.svg` / `logo.png` / `logo.gif` 同样是生成的：用的就是插件里同一个 `fishSvg()`。
-SVG 里烘焙了 SMIL 动画，GIF 是同一批帧的栅格版 —— README 顶部用的是 GIF，
-因为 GitHub 不会播放仓库里 SVG 自带的动画。
-
-## 状态
-
-- 离线能验的都验了：43 项检查全绿，插件真实输出已渲染核对。
-- **真实界面尚未核验**：需要重启 `dsh web` 才会加载。
 
 ## 许可
 
