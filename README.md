@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo.gif" width="120" alt="DSH SubAgent Fish" />
+<img src="logo.gif" width="150" alt="DSH SubAgent Fish" />
 
 # DSH SubAgent Fish
 

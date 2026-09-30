@@ -32,10 +32,12 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
-/** The logo's identity: green betta (`#5CC87A` is palette index 0), round eyes, no markings. */
+/** The logo's identity: green betta (`#5CC87A` is palette index 0), no markings. */
 const SPECIES = 'betta'
 const COLOR_INDEX = 0
-const EYES = 'dots'
+// `big` rather than `dots`: the README shows the icon at 150px, where `dots`
+// shrinks to about 4px per eye and stops reading as an eye at all.
+const EYES = 'big'
 const BASE = 'logofish00'
 const PNG_SIZE = 512
 const GIF_SIZE = 240
