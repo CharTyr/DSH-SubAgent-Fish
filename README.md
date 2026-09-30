@@ -6,7 +6,8 @@
 
 **给 DSH 的每个子代理一条会游动的小鱼头像**
 
-同一条鱼由子代理的 ID 决定 —— 同一个子代理永远是同一条鱼，不同子代理自然分成不同的鱼形、颜色与花纹。
+同一条鱼由子代理的 ID 决定 —— 同一个子代理永远是同一条鱼，不同子代理自然分成不同的鱼形、颜色与花纹。子智能体运作时会游动，停止时鱼也会停止游动。
+
 哦——小鱼————！
 
 `PolyForm Noncommercial 1.0.0` · 非商业使用 · [LICENSE](LICENSE)
@@ -17,15 +18,15 @@
 
 ## 样图
 
-<img width="1154" height="759" alt="image" src="https://github.com/user-attachments/assets/6d7f1f84-ab15-48ed-a3f9-d8e065f75683" />
+<img width="311" height="269" alt="image" src="https://github.com/user-attachments/assets/6922861f-1f97-463a-a39a-6ac884c9289b" />
+
 
 ## 安装
 
 插件是一个普通的 DSH 组合包（bundle）。**装之前先确认两件事**：
 
 - 有一个能跑的 DSH（下面以 `web` profile 为例）；
-- 可选：装了 [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) 才会有
-  「子代理 · 小鱼」那一页。**没装也能用**，只是少一页，右侧栏标签上的鱼照常出现。
+- 需要搭配 [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) 使用
 
 ### 直接从 GitHub 装（推荐）
 
@@ -104,8 +105,7 @@ dsh web
 
 重启后应该看到：
 
-- 打开任意一个子代理对话，右侧栏的标签上出现该子代理的小鱼；
-- better-sidebar 侧边栏里多出一页「子代理 · 小鱼」（＋ 菜单里也在）；
+- better-sidebar 侧边栏里多出一页「子代理 · 小鱼」
 - 同一个子代理反复进出，鱼始终是同一条；不同子代理是不同的鱼。
 
 还想更确定一点，可以对着 `dsh web` 启动时打印的那个 URL 跑一次自检：
