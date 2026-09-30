@@ -173,13 +173,6 @@ const shoot = (page, out, size, extra = []) => {
 
 // Static PNG: the first frame, transparent, frozen.
 const still = fishSvg(seed, { size: PNG_SIZE, pattern: 'none', still: true })
-/** Read the body colour straight out of the markup, so the GIF can never disagree. */
-const fishColour = (() => {
-  const match = /<path class="fish-body" d="[^"]*" fill="#([0-9A-Fa-f]{6})"/.exec(still)
-  if (match === null) throw new Error('cannot find the body fill in the generated SVG')
-  const value = Number.parseInt(match[1], 16)
-  return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
-})()
 shoot(
   `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:transparent}svg{display:block;width:${PNG_SIZE}px;height:${PNG_SIZE}px}</style></head><body>${still}</body></html>`,
   'logo.png', PNG_SIZE, ['--default-background-color=00000000'],
@@ -216,9 +209,6 @@ if (grid.width < COLUMNS * CELL || grid.height < ROWS * CELL) {
   throw new Error(`frame grid too small: ${grid.width}×${grid.height}, need ${COLUMNS * CELL}×${ROWS * CELL}`)
 }
 
-/** The one opaque colour the logo uses, read back from the static render. */
-const [fishR, fishG, fishB] = fishColour
-
 const frames = []
 for (let index = 0; index < FRAMES; index++) {
   const originX = (index % COLUMNS) * CELL
@@ -238,15 +228,32 @@ for (let index = 0; index < FRAMES; index++) {
       }
       const offset = (y * GIF_SIZE + x) * 4
       if (coverage / 4 >= 128) {
-        frame[offset] = fishR
-        frame[offset + 1] = fishG
-        frame[offset + 2] = fishB
+        // Carry the source colour through — the fish is not one flat colour:
+        // its eyes are white. Painting every opaque pixel with the body colour
+        // (which this used to do) silently erased them.
+        const sample = (originY + y * 2) * grid.width + (originX + x * 2)
+        frame[offset] = grid.rgba[sample * 4]
+        frame[offset + 1] = grid.rgba[sample * 4 + 1]
+        frame[offset + 2] = grid.rgba[sample * 4 + 2]
         frame[offset + 3] = 255
       }
     }
   }
   frames.push(frame)
 }
+
+// Guard the bug this used to have: flattening the artwork to a single colour
+// quietly removed the eyes. The logo must always carry at least two.
+const opaqueColours = new Set()
+for (const frame of frames) {
+  for (let o = 0; o < frame.length; o += 4) {
+    if (frame[o + 3] >= 128) opaqueColours.add((frame[o] << 16) | (frame[o + 1] << 8) | frame[o + 2])
+  }
+}
+if (opaqueColours.size < 2) {
+  throw new Error(`logo has only ${opaqueColours.size} opaque colour(s) — the eyes are missing`)
+}
+console.log(`logo uses ${opaqueColours.size} opaque colours (body + eyes)`)
 
 const gif = encodeGif({ width: GIF_SIZE, height: GIF_SIZE, frames, delay: 8, loop: 0 })
 writeFileSync(join(ROOT, 'logo.gif'), gif)
