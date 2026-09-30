@@ -5,7 +5,8 @@
  * `design_platform_css` 等几段样式字符串。提取出来只是为了让离线预览页和真实
  * 界面同色，没有做任何改动。
  *
- * DSH（DeepSeek Harness）以 MIT 许可发布，本文件随本仓库一并按 MIT 分发。
+ * DSH（DeepSeek Harness）以 MIT 许可发布。本仓库整体是 PolyForm Noncommercial 1.0.0，
+ * 但**本文件不是** —— 它仍按 DSH 原本的 MIT 分发，完整声明见 THIRD_PARTY_NOTICES.md。
  * 升级 DSH 之后如果想同步，重跑提取即可 —— 这份文件不参与插件构建，只服务预览页。
  * ------------------------------------------------------------------------- */
 

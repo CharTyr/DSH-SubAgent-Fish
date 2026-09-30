@@ -46,5 +46,5 @@
     "test": "node tools/test-client.mjs",
     "preview": "node preview/build.mjs"
   },
-  "license": "MIT"
+  "license": "PolyForm-Noncommercial-1.0.0"
 }

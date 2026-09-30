@@ -2,6 +2,8 @@
 
 给 DSH 的每个子代理一条会游动的小鱼。
 
+`PolyForm Noncommercial 1.0.0` · 非商业使用 · [LICENSE](LICENSE)
+
 同一条鱼由子代理的 ID 决定 —— 同一个子代理永远是同一条鱼，不同子代理自然分成不同的
 鱼形、颜色与花纹。鱼不是图片，是现场用 SVG 画出来的。
 
@@ -111,5 +113,13 @@ node tools/verify-live.mjs 'http://127.0.0.1:3080/?token=…'
 
 ## 许可
 
-MIT。`preview/dsh-theme.css` 是从 DSH（同样 MIT）自己的主题包里原样提取的设计变量，
-只为让预览页和真实界面同色，不参与插件构建。
+**[PolyForm Noncommercial License 1.0.0](LICENSE)** —— 非商业用途随便用：个人研究、
+实验、私人娱乐、爱好项目、教学、慈善与公共机构等，都算「许可用途」；商业用途不行。
+
+需要留意的是，**这不是 OSI 认可的开源协议**，属于 source-available。要商业授权请联系作者。
+
+有一处例外：`preview/dsh-theme.css` 是从 DSH 自己的主题包里原样提取的，而 DSH 以 **MIT**
+发布。MIT 允许再分发，但要求保留原有声明 —— 所以那一份文件仍按 MIT 分发，**不受本仓库
+协议约束**。完整的第三方声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+本插件通过公开接口与 DSH、`dsh-better-sidebar` 协作，但不包含它们的任何代码。
