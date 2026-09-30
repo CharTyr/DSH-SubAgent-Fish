@@ -59,6 +59,30 @@ check('lib/client.js exports apply', /exports\.apply\s*=/.test(source))
 check('lib/client.js registers the subagent tab-title slot', source.includes('sidebar.right.pane.tab.title'))
 check('lib/client.js registers the better-sidebar page', source.includes('"betterSidebar"') || source.includes("'betterSidebar'"))
 
+// The loader resolves the row by NAME from the profile directory, so the package
+// has to be reachable there and its manifest has to satisfy the client-module
+// scan — the same three things `dsh-client-modules` checks before it will serve
+// a browser half. A restart is the only way to act on this, so check it first.
+console.log('\nclient half, as the profile would load it')
+const { existsSync, realpathSync } = await import('node:fs')
+const installed = join(profileDir, 'node_modules', PLUGIN_ID)
+check('package resolves from the profile directory', existsSync(installed), installed)
+if (existsSync(installed)) {
+  const manifest = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8'))
+  const declaration = manifest.dsh?.client
+  check('declares dsh.client', declaration !== undefined && typeof declaration === 'object')
+  check("dsh.client.platform is 'web'", declaration?.platform === 'web', String(declaration?.platform))
+  const clientEntry = manifest.exports?.['./client']
+  const clientRel = typeof clientEntry === 'string' ? clientEntry : clientEntry?.default
+  check('exports["./client"] resolves to a string path', typeof clientRel === 'string', JSON.stringify(clientEntry))
+  check('that file exists', typeof clientRel === 'string' && existsSync(join(installed, clientRel)), String(clientRel))
+  check('main entry exists', existsSync(join(installed, manifest.main ?? '')), String(manifest.main))
+  check('the bundle patch exists', existsSync(join(installed, manifest.dsh?.bundle?.patch ?? '')), String(manifest.dsh?.bundle?.patch))
+  check('the installed bundle registers under the package name',
+    typeof clientRel === 'string' && readFileSync(join(installed, clientRel), 'utf8').includes(`id: ${JSON.stringify(PLUGIN_ID)}`))
+  console.log(`  (installed via ${realpathSync(installed).startsWith(ROOT) ? 'a link to this repo' : realpathSync(installed)})`)
+}
+
 const target = process.argv.find((argument) => argument.startsWith('http'))
 if (target === undefined) {
   console.log('\nno URL given — skipping the live half.')
