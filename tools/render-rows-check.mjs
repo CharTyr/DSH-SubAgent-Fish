@@ -122,22 +122,67 @@ captured.exports.apply({
   },
 });
 
-setTimeout(function () {
-  var subagentRows = document.querySelectorAll('#subagents [role="treeitem"][aria-level]');
-  var decorated = document.querySelectorAll('#subagents .dsf-row-fish');
-  var decoyRows = document.querySelectorAll('#files [role="treeitem"][aria-level]');
-  var decoyTouched = document.querySelectorAll('#files .dsf-row-fish');
-  var ids = Array.prototype.map.call(decorated, function (el) {
-    return el.parentElement.getAttribute('dsfFishId') });
-  document.getElementById('probe').textContent = JSON.stringify({
-    subagentRows: subagentRows.length,
-    decorated: decorated.length,
-    fishIds: ids,
-    decoyRows: decoyRows.length,
-    decoyTouched: decoyTouched.length,
-    animatedFish: document.querySelectorAll('svg.fish-swim[data-fish-id]').length,
+/* 断言确定性的不变量，而不是观察动效。
+ *
+ * headless Chrome 在虚拟时间下 rAF 只跑两三帧就停（rAF 探针实测如此），所以
+ * 「隔一会儿看看它动没动」这种测试在这里不可靠。改成查那条真正决定动不动的
+ * 事实：这条鱼身上有没有游动标记（svg.fish-swim[data-fish-id]）。
+ * 引擎的循环只认带标记的鱼 —— 有标记就是会动，没有就是静着。
+ */
+var probe = document.getElementById('probe');
+var result = { phases: {} };
+
+/* 引擎启动循环时会 schedule 一帧；用这个当「循环被叫醒过」的证据。
+   本页只有引擎会用到 rAF。 */
+var rafCalls = 0;
+var realRaf = window.requestAnimationFrame.bind(window);
+window.requestAnimationFrame = function (cb) { rafCalls++; return realRaf(cb) };
+
+/* 每条行上的鱼带不带游动标记 */
+function swimmingRows() {
+  var out = [];
+  Array.prototype.forEach.call(document.querySelectorAll('#subagents [role="treeitem"]'), function (row) {
+    var fish = row.querySelector('.dsf-row-fish');
+    var label = row.querySelector('[class*="_subagentLabel"]');
+    out.push({
+      label: label ? label.textContent : null,
+      state: fish ? fish.getAttribute('data-dsf-state') : null,
+      swims: fish !== null && fish.querySelector('svg.fish-swim[data-fish-id]') !== null,
+    });
   });
-}, 120);
+  return out;
+}
+
+setTimeout(function () {
+  result.environment = {
+    reducedMotion: typeof matchMedia === 'function'
+      ? matchMedia('(prefers-reduced-motion: reduce)').matches : null,
+  };
+  result.phases.initial = {
+    rows: swimmingRows(),
+    decorated: document.querySelectorAll('#subagents .dsf-row-fish').length,
+    animatedFish: document.querySelectorAll('#subagents svg.fish-swim[data-fish-id]').length,
+    decoyRows: document.querySelectorAll('#files [role="treeitem"][aria-level]').length,
+    decoyTouched: document.querySelectorAll('#files .dsf-row-fish').length,
+    fishIds: Array.prototype.map.call(document.querySelectorAll('#subagents .dsf-row-fish'), function (el) {
+      return el.parentElement.getAttribute('dsfFishId') }),
+    rafCallsAfterFirstPaint: rafCalls,
+  };
+
+  // 让「把插件装进 web profile」这条子代理开跑，再逼一次重画
+  list.byId['c-install'].running = true;
+  var before = rafCalls;
+  document.getElementById('subagents').appendChild(document.createElement('div'));
+
+  setTimeout(function () {
+    result.phases.afterOneStartsRunning = {
+      rows: swimmingRows(),
+      animatedFish: document.querySelectorAll('#subagents svg.fish-swim[data-fish-id]').length,
+      rafCallsDuringUpdate: rafCalls - before,
+    };
+    probe.textContent = JSON.stringify(result);
+  }, 60);
+}, 60);
 </script>
 </body></html>
 `

@@ -90,7 +90,6 @@ function installSidebarRowFish(ctx) {
     const byLabel = subagentIdsByLabel(list)
     let touched = 0
     for (const row of rows) {
-      if (row.getAttribute(ROW_MARK) !== null) continue
       const labelElement = row.querySelector(SUBAGENT_LABEL_SELECTOR)
       if (labelElement === null) continue
       const label = labelElement.textContent?.trim()
@@ -98,16 +97,30 @@ function installSidebarRowFish(ctx) {
       const sessionId = byLabel.get(label)
       // 查不到就不动它 —— 宁可少挂一条鱼，也不要挂错人。
       if (sessionId === undefined) continue
+      const state = rowFishState(list, sessionId)
+      const existing = row.querySelector('.dsf-row-fish')
+      if (existing !== null) {
+        // 行还在，但状态变了（开跑或跑完）：换掉这条鱼，让它开始 / 停止游动。
+        if (existing.getAttribute('data-dsf-state') === state) continue
+        existing.innerHTML = fishAvatarMarkup(fishIdentity(sessionId), shouldFishSwim(state))
+        existing.setAttribute('data-dsf-state', state)
+        touched += 1
+        continue
+      }
       const host = document.createElement('span')
       host.className = 'dsf-row-fish'
-      host.setAttribute('data-dsf-state', rowFishState(list, sessionId))
-      host.innerHTML = fishAvatarMarkup(fishIdentity(sessionId))
+      host.setAttribute('data-dsf-state', state)
+      host.innerHTML = fishAvatarMarkup(fishIdentity(sessionId), shouldFishSwim(state))
       row.insertBefore(host, row.firstChild)
       row.setAttribute(ROW_MARK, sessionId)
       touched += 1
     }
     if (touched > 0) {
       emptyScans = 0
+      // 行是别的插件画的，它的重画会把鱼换掉；这里动完之后必须显式叫醒游动
+      // 循环 —— 缓存命中时 fishSvg 不会跑，循环停了就没人重启它。
+      // 只有真的挂了「该游的鱼」才需要叫。
+      if (rows.length > 0) ensureFishSwimming()
       return
     }
     // 没有任何一行认得出来：可能是这个页面根本没打开，也可能 better-sidebar

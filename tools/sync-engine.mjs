@@ -123,6 +123,11 @@ function build() {
       '    const sec = now / 1000;',
   )
 
+  // The loop gives up after five fishless scans; only fishSvg() ever restarts
+  // it, so a caller that caches its markup (this plugin does) can end up with
+  // perfectly good fish that never move. Exporting the starter lets a caller
+  // say "there are fish now" without re-generating the artwork.
+  source += '\nexport { startSwimLoop };\n'
   source += '\n' + readRequired(MARKINGS)
 
   const banner =

@@ -404,6 +404,8 @@ function startSwimLoop() {
   requestAnimationFrame(tick);
 }
 
+export { startSwimLoop };
+
 // Procedural contours, not a library of preset pictures or fixed grids.
 // Work in the actual fish's head–tail frame. Every point later shares its swim displacement.
 function makeMarkings(pattern, seed, fish) {

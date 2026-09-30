@@ -150,8 +150,8 @@ function haloNeed(hex) {
  */
 const fishAvatarCache = new Map()
 
-function fishAvatarMarkup(identity) {
-  const key = `${identity.seed}|${identity.pattern}|${identity.patternSeed}|${identity.strength}`
+function fishAvatarMarkup(identity, animated = true) {
+  const key = `${identity.seed}|${identity.pattern}|${identity.patternSeed}|${identity.strength}|${animated ? 'swim' : 'still'}`
   let markup = fishAvatarCache.get(key)
   if (markup === undefined) {
     markup = fishSvg(identity.seed, {
@@ -159,10 +159,65 @@ function fishAvatarMarkup(identity) {
       pattern: identity.pattern,
       patternSeed: identity.patternSeed,
       strength: identity.strength,
+      // 只有正在跑的子代理才带游动标记。不带标记的鱼引擎完全看不见，
+      // 也就永远不会动 —— 这比「动起来再冻住」省事，也不会留下半动的状态。
+      still: !animated,
     })
     fishAvatarCache.set(key, markup)
   }
   return markup
+}
+
+/**
+ * 一条鱼的动画开关由它对应的子代理状态决定：在跑就游，不在跑就静着。
+ *
+ * 这样「动」本身就是信息 —— 一眼能看出谁还在干活，而不是一屏都在扭。
+ *
+ * @param state - `'running'` 或其它（已结束 / 失败）。
+ * @returns 是否让这条鱼游动。
+ */
+function shouldFishSwim(state) {
+  return state === 'running'
+}
+
+/**
+ * 告诉画鱼引擎「现在页面上有鱼了」。
+ *
+ * 引擎的循环连续 5 轮扫不到鱼就会自己停下（省电），而它只在 fishSvg() 被调用时
+ * 才会重启。本插件把生成好的 SVG 缓存了起来，同一条鱼第二次出现时走缓存、
+ * fishSvg 不会被调用 —— 于是切走再切回来、或者页面重画之后，循环已经停了却
+ * 没人叫醒它，鱼就成了静止的。所以每次把鱼放进 DOM 后都显式叫一次。
+ *
+ * 重复调用是安全的：引擎自己用 swimOn 挡着，不会开出第二个循环。
+ */
+function ensureFishSwimming() {
+  if (typeof startSwimLoop !== 'function') return
+  ensureSwimHeartbeat()
+  if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // 只说一次，免得刷屏；这条对排查「为什么不动」很关键。
+    if (globalThis.__dsfMotionNotice !== true) {
+      globalThis.__dsfMotionNotice = true
+      console.info('[dsh-subagent-fish] 系统开启了「减少动态效果」，小鱼保持静止。')
+    }
+    return
+  }
+  startSwimLoop()
+}
+
+/**
+ * 低频兜底：只要页面上还有该游的鱼，就保证循环是活的。
+ *
+ * 引擎的循环连续 5 轮扫不到鱼就会自己停下（省电），而它只在 fishSvg() 被调用时
+ * 才重启；本插件缓存了生成好的 SVG，所以「原来全是静止的鱼、某个子代理突然开跑」
+ * 这种情形下没人叫醒它。每 2 秒一次 querySelector 的代价可以忽略。
+ */
+let swimHeartbeat = null
+function ensureSwimHeartbeat() {
+  if (swimHeartbeat !== null || typeof setInterval !== 'function') return
+  swimHeartbeat = setInterval(() => {
+    if (typeof document === 'undefined') return
+    if (document.querySelector('svg.fish-swim[data-fish-id]') !== null) ensureFishSwimming()
+  }, 2000)
 }
 
 /**
@@ -176,8 +231,16 @@ function fishAvatarMarkup(identity) {
 function FishAvatar(props) {
   const { id, size = 24, state, rim, className } = props
   const identity = React.useMemo(() => fishIdentity(id), [id])
-  const html = React.useMemo(() => ({ __html: fishAvatarMarkup(identity) }), [identity])
+  const animated = shouldFishSwim(state)
+  const html = React.useMemo(
+    () => ({ __html: fishAvatarMarkup(identity, animated) }),
+    [identity, animated],
+  )
   const style = React.useMemo(() => ({ '--dsf-size': `${size}px` }), [size])
+  // 挂上去之后再叫醒循环：缓存命中时 fishSvg 不会跑，只能靠这里。
+  if (typeof React.useEffect === 'function') {
+    React.useEffect(() => { if (animated) ensureFishSwimming() })
+  }
   return React.createElement('span', {
     className: className === undefined ? 'dsf-avatar' : `dsf-avatar ${className}`,
     style,

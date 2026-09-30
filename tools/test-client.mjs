@@ -215,11 +215,17 @@ check('it anchors on ARIA, not on hashed class names', bundleSource.includes('[r
 check('it still requires the subagent-only label element', bundleSource.includes('_subagentLabel'))
 check('it gives up instead of scanning forever', bundleSource.includes('MAX_EMPTY_SCANS'))
 check('it cleans up after itself on unload', bundleSource.includes('disposed = true'))
+check('animation follows the run state, not the artwork', bundleSource.includes('function shouldFishSwim'))
+check('idle fish are emitted without swim hooks', bundleSource.includes('still: !animated'))
+check('a stalled engine loop is woken again', bundleSource.includes('ensureFishSwimming'))
+check('there is a low-frequency heartbeat as a backstop', bundleSource.includes('ensureSwimHeartbeat'))
 // Identity: the whole point is that it is stable and spread out.
 // ---------------------------------------------------------------------------
 console.log('\nidentity (through the rendered surface)')
-const markupFor = (childId) => render(Title({
+/** Render one tab title and hand back its fish markup. `running` decides motion. */
+const markupFor = (childId, running = true) => render(Title({
   useTabInfo: () => ({ tab: { title: 't', contentId: `dsh-resource://subagentchat/session/${childId}` } }),
+  useSessionStatus: (selector) => selector(new Map([[childId, { running }]])),
 })).props.children[0].props.dangerouslySetInnerHTML.__html
 
 const first = markupFor('child-a')
@@ -267,7 +273,11 @@ check('the worst fish really is below 3:1 on the dark panel and is marked',
   `${worst.hex} at ${worst.r.toFixed(2)}:1 -> ${worst.halo}`)
 
 check('the markup really is a fish', first.includes('fish-body') && first.includes('fish-head'))
-check('the fish is animated (registered with the swim loop)', first.includes('fish-swim') && first.includes('data-fish-id'))
+check('a running subagent\'s fish carries the swim hooks', first.includes('fish-swim') && first.includes('data-fish-id'))
+check('a finished subagent\'s fish carries none, so it stays still',
+  !markupFor('child-a', false).includes('fish-swim') && !markupFor('child-a', false).includes('data-fish-id'))
+check('both states draw the same fish, only the motion differs',
+  markupFor('child-a', true).replace(/ fish-swim| data-fish-id="\d+"/g, '') === markupFor('child-a', false))
 check('a patterned fish carries its clipped markings', first.includes('fish-clip') || first.includes('fish-mark') === false)
 
 console.log(failures === 0 ? '\nall checks passed' : `\n${failures} check(s) failed`)

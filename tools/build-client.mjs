@@ -37,7 +37,10 @@ const PARTS = [
 function asSharedScope(path) {
   const text = readFileSync(join(ROOT, path), 'utf8')
   if (text.includes('</script>')) throw new Error(`${path} contains </script>`)
-  return `// ---- ${path} ----\n${text.replace(/^import\s[^\n]*\n/gm, '').replace(/^export\s+/gm, '')}`
+  return `// ---- ${path} ----\n${text
+    .replace(/^import\s[^\n]*\n/gm, '')
+    .replace(/^export\s*\{[^}]*\};?[ \t]*\n?/gm, '')
+    .replace(/^export\s+/gm, '')}`
 }
 
 for (const part of PARTS) {
