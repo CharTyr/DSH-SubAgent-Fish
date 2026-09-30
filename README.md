@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo.png" width="120" alt="DSH SubAgent Fish" />
+<img src="logo.gif" width="120" alt="DSH SubAgent Fish" />
 
 # DSH SubAgent Fish
 
@@ -18,7 +18,6 @@
 
 <img width="1154" height="759" alt="image" src="https://github.com/user-attachments/assets/6d7f1f84-ab15-48ed-a3f9-d8e065f75683" />
 
-
 ## 安装
 
 插件是一个普通的 DSH 组合包（bundle）。**装之前先确认两件事**：
@@ -27,30 +26,38 @@
 - 可选：装了 [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) 才会有
   「子代理 · 小鱼」那一页。**没装也能用**，只是少一页，右侧栏标签上的鱼照常出现。
 
-### 第一步：把仓库放到本机
+### 直接从 GitHub 装（推荐）
+
+```bash
+dsh plugin --profile web add github:CharTyr/DSH-SubAgent-Fish
+```
+
+`lib/` 是构建产物，但已经提交进仓库，所以**不会触发构建、也不需要 npm install**，装完即用。
+
+想固定在某个版本而不是跟着默认分支走，在仓库名后面加 `#` 加标签：
+
+```bash
+dsh plugin --profile web add github:CharTyr/DSH-SubAgent-Fish#v0.1.0
+```
+
+### 或者从本地克隆装
 
 ```bash
 git clone https://github.com/CharTyr/DSH-SubAgent-Fish.git
 cd DSH-SubAgent-Fish
-```
-
-`lib/` 是构建产物，但已经提交进仓库，所以**不需要 npm install、也不需要构建**，克隆下来就能用。
-
-### 第二步：装进 profile
-
-```bash
 dsh plugin --profile web add link:$PWD
 ```
 
-### 如果上一步被拒绝
+### 如果被拒绝了
 
 这不是你的问题：`pnpm` 在装的时候可能顺手把你 profile 里**别的**插件升到与当前 dsh 不兼容的版本，
 DSH 的兼容检查就会拒绝整次安装并回滚。这种情况下手工加两处即可，完全不碰 pnpm：
 
-1. 打开 `~/.dsh/profiles/web/package.json`，在 `dependencies` 里加一行：
+1. 打开 `~/.dsh/profiles/web/package.json`，在 `dependencies` 里加一行
+   （`github:` 或 `link:` 按你上面用的那种）：
 
    ```json
-   "dsh-subagent-fish": "link:/你克隆到的绝对路径/DSH-SubAgent-Fish"
+   "dsh-subagent-fish": "github:CharTyr/DSH-SubAgent-Fish"
    ```
 
 2. 同一个文件的 `dsh.profile.bundles` 数组**末尾**追加一项：
@@ -61,15 +68,14 @@ DSH 的兼容检查就会拒绝整次安装并回滚。这种情况下手工加�
 
    > 必须在 `dsh-better-sidebar` **之后** —— 本插件要向它注册页面，得先有它。
 
-3. 在 profile 目录里建链接：
+3. 在 profile 目录里装上去：
 
    ```bash
    cd ~/.dsh/profiles/web
-   mkdir -p node_modules
-   ln -s /你克隆到的绝对路径/DSH-SubAgent-Fish node_modules/dsh-subagent-fish
+   pnpm install
    ```
 
-### 第三步：确认挂上了（可选）
+### 确认挂上了（可选）
 
 ```bash
 dsh --profile web --dump-config | grep -A1 subagent-fish
@@ -84,7 +90,7 @@ dsh --profile web --dump-config | grep -A1 subagent-fish
 
 同时确认输出里**没有** `skipped bundle`。
 
-### 第四步：重启
+### 重启
 
 ```bash
 # 先停掉正在跑的 dsh web，再重新启动
@@ -93,7 +99,7 @@ dsh web
 
 插件在启动时组合进插件树，所以**必须重启**才会加载。
 
-### 第五步：核对
+### 核对
 
 重启后应该看到：
 
@@ -115,7 +121,7 @@ node tools/verify-live.mjs 'http://127.0.0.1:3080/?token=…'
 dsh plugin --profile web remove dsh-subagent-fish
 ```
 
-手工装的话，把上面加的两处删掉、删掉那个软链接，重启即可。
+手工加的话，把上面加的两处删掉，重启即可。
 
 ## 它做什么
 
@@ -128,14 +134,6 @@ dsh plugin --profile web remove dsh-subagent-fish
 
 整条插件**没有主机侧逻辑**：鱼的身份是子代理 id 的纯函数，数据本来就在客户端。
 
-## 离线预览
-
-不用装 DSH，双击就能打开：
-
-- **[preview/index.html](preview/index.html)** —— 手画的界面模型，可以现场调大小、描边、深浅主题、
-  游动开关，还有「界面外壳 → 只看鱼」把所有模拟面板的底色和边框去掉。
-- **[preview/plugin-render.html](preview/plugin-render.html)** —— 插件本体的真实输出。
-
 ## 开发
 
 ```bash
@@ -143,16 +141,18 @@ node tools/sync-engine.mjs      # 从上游画鱼源码重新生成 src/fish/eng
 node tools/sync-engine.mjs --check
 node tools/build-client.mjs     # 生成 lib/client.js 与 lib/index.js
 node tools/test-client.mjs      # 对已构建的 lib/client.js 跑 43 项检查
-node tools/render-preview.mjs   # 把插件真实输出渲染成 HTML
-node tools/build-logo.mjs       # 重新生成 logo.svg / logo.png
-node preview/build.mjs          # 重新生成离线预览页
+node tools/build-logo.mjs       # 生成 logo.svg / logo.png / logo.gif
+node tools/render-preview.mjs   # 把插件真实输出渲染成一个本地 HTML
+node preview/build.mjs          # 生成离线预览页（本地用，不发布）
 ```
 
 `src/fish/engine.js` 是**生成文件**，由 `tools/sync-engine.mjs` 从
 [MaiWork](https://github.com/CharTyr/MaiWork) 的正式画鱼源码加上「花纹」与「暂停」两项能力后生成，
 和控制台里正式用的鱼是同一份代码。上游一改，生成脚本会直接报错，而不是悄悄产出走样的版本。
 
-`logo.svg` / `logo.png` 同样是生成的：用的就是插件里同一个 `fishSvg()`，固定成一条绿色斗鱼、圆眼、无花纹。
+`logo.svg` / `logo.png` / `logo.gif` 同样是生成的：用的就是插件里同一个 `fishSvg()`。
+SVG 里烘焙了 SMIL 动画，GIF 是同一批帧的栅格版 —— README 顶部用的是 GIF，
+因为 GitHub 不会播放仓库里 SVG 自带的动画。
 
 ## 状态
 

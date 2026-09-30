@@ -7,3 +7,12 @@ node_modules/
 
 # scratch page tools/build-logo.mjs writes while rasterising
 .logo-render.html
+
+# built preview pages — generated locally by preview/build.mjs and
+# tools/render-preview.mjs, deliberately not published
+preview/index.html
+preview/plugin-render.html
+
+# rendered screenshots — the README hosts its images as GitHub attachments,
+# so these are local scratch only (regenerate: tools/render-preview.mjs + Chrome)
+docs/images/

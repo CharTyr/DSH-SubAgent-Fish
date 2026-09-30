@@ -32,10 +32,7 @@
   },
   "files": [
     "lib",
-    "src",
-    "tools",
-    "cordis.patch.yml",
-    "README.md"
+    "cordis.patch.yml"
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",
