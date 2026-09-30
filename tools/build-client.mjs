@@ -29,7 +29,7 @@ const PARTS = [
   'src/fish/identity.js',
   'src/client/fish-avatar.js',
   'src/client/subagent-tab-title.js',
-  'src/client/better-sidebar-tab.js',
+  'src/client/better-sidebar-rows.js',
   'src/client/index.js',
 ]
 

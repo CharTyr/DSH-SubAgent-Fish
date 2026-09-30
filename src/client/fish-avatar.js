@@ -51,7 +51,18 @@ body:not([data-ds-dark-theme]) .dsf-avatar[data-halo="both"] > svg {
 .dsf-chip { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
 .dsf-chip > .dsf-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ---- better-sidebar 里的「子代理 · 小鱼」整页（E） ---- */
+/* ---- 挂在 better-sidebar 子代理行上的小鱼（E） ---- */
+/* 行本身是 better-sidebar 渲染的，这里只负责那颗鱼：紧贴状态点左侧，
+   尺寸跟着行的字号走，不改变行高。 */
+.dsf-row-fish {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  margin-right: 2px;
+}
+.dsf-row-fish > svg { display: block; width: 20px; height: 20px; }
+.dsf-row-fish[data-dsf-state="done"] > svg { opacity: .8; }
+
 .dsf-page { display: flex; flex-direction: column; gap: 10px; padding: 12px 10px; font-size: 13px; color: var(--dsw-alias-label-primary); }
 .dsf-root { display: flex; align-items: center; gap: 9px; padding: 0 4px 10px; border-bottom: .5px solid var(--dsw-alias-border-l2); }
 .dsf-root-body { display: flex; flex-direction: column; min-width: 0; }

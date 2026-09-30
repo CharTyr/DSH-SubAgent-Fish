@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url'
 import { createContext, runInContext } from 'node:vm'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const bundleSource = readFileSync(join(ROOT, 'lib/client.js'), 'utf8')
 const SUBAGENT_TAB_ID = '@deepseek-ai/dsh-client-ui-subagent'
 
 let failures = 0
@@ -63,8 +64,12 @@ function render(node) {
 
 const styleTags = []
 const documentStub = {
+  body: {},
   querySelector: () => null,
-  createElement: () => ({ dataset: {}, textContent: '', isConnected: true }),
+  // The decorator scans for rows; there are none in a headless run, so it must
+  // find zero and quietly stop.
+  querySelectorAll: () => [],
+  createElement: () => ({ dataset: {}, textContent: '', isConnected: true, setAttribute() {}, insertBefore() {} }),
   head: { appendChild: (tag) => styleTags.push(tag) },
 }
 
@@ -88,6 +93,10 @@ const sandbox = {
 }
 sandbox.window = sandbox
 sandbox.globalThis = sandbox
+// The decorator observes the DOM. A stub is enough here — the real behaviour is
+// checked against real markup by tools/render-rows-check.mjs.
+sandbox.MutationObserver = class { observe() {} disconnect() {} }
+sandbox.queueMicrotask = (fn) => fn()
 
 let registered = null
 sandbox.__ModuleLoader__ = {
@@ -119,6 +128,7 @@ console.log('\napply() contributions')
 const slotRegistrations = []
 let betterSidebarRequested = false
 let betterSidebarRegistration = null
+let sidebarRowDisposer = null
 
 const ctx = {
   effect: (fn) => { fn() },
@@ -137,8 +147,11 @@ const ctx = {
       betterSidebarRequested = true
       // Simulate dsh-better-sidebar being mounted: its public service appears.
       callback({
-        effect: (fn) => { fn() },
+        effect: (fn) => { const dispose = fn(); if (typeof dispose === 'function') sidebarRowDisposer = dispose },
         betterSidebar: { registerTab: (descriptor) => { betterSidebarRegistration = descriptor; return () => {} } },
+        // The decorator reads the session list and starts observing; hand it a
+        // usable shape so the call path really runs.
+        sessions: { list: { getSnapshot: () => ({ byId: {}, projectionsBySession: {} }), subscribe: () => () => {} } },
       })
     }
   },
@@ -154,10 +167,8 @@ check('registers the right-sidebar tab title slot', titleSlot !== undefined)
 equal('tab title slot is keyed by the subagent chat tab type', titleSlot?.registration?.spec?.key, SUBAGENT_TAB_ID)
 
 check('asks for the optional betterSidebar service', betterSidebarRequested)
-check('registers a better-sidebar tab', betterSidebarRegistration !== null)
-equal('better-sidebar tab id', betterSidebarRegistration?.id, 'dsh-subagent-fish:shoal')
-check('better-sidebar tab is single-instance', betterSidebarRegistration?.single === true)
-check('better-sidebar tab declares a component', typeof betterSidebarRegistration?.component === 'function')
+check('no tab is registered any more (the extra page is gone)', betterSidebarRegistration === null)
+check('the betterSidebar service is used to install the row decorator', typeof sidebarRowDisposer === 'function')
 
 // ---------------------------------------------------------------------------
 // D — the tab title.
@@ -191,61 +202,19 @@ const foreignTab = render(Title({
 equal('a non-subagent tab is left untouched', foreignTab, '某个别的标签')
 
 // ---------------------------------------------------------------------------
-// E — the better-sidebar page.
+// E — the row decorator.
+//
+// The decorator is exercised against real markup in a browser by
+// tools/render-rows-check.mjs. What is checked here is what it depends on:
+// that it ships, and that it anchors on things better-sidebar is unlikely to
+// change — ARIA semantics, not hashed CSS class names.
 // ---------------------------------------------------------------------------
-console.log('\nE · better-sidebar subagent page')
-const ShoalTab = betterSidebarRegistration.component
-
-// Mirrors the real SidebarSessionList: summaries carry id/displayTitle/parentId/
-// origin/running, and the catalog lives per parent in projectionsBySession.
-const fakeList = {
-  byId: {
-    'root-1': { id: 'root-1', displayTitle: '主会话 · 做一个 DSH 小鱼插件', running: true },
-    'child-a': { id: 'child-a', displayTitle: '子代理 A', parentId: 'root-1', origin: 'subagent', running: true },
-    'child-a1': { id: 'child-a1', displayTitle: '子代理 A1', parentId: 'child-a', origin: 'subagent', running: false },
-    'child-b': { id: 'child-b', displayTitle: '子代理 B', parentId: 'root-1', origin: 'subagent', running: false },
-  },
-  projectionsBySession: {
-    'root-1': { state: 'ready', values: { subagentCatalog: [
-      { id: 'child-a', label: '调研 DSH 插件开发文档', mode: 'continuable', createdAt: Date.now() - 120000 },
-      { id: 'child-b', label: '把插件装进 web profile', mode: 'one-shot', createdAt: Date.now() - 60000 },
-    ] } },
-    'child-a': { state: 'ready', values: { subagentCatalog: [
-      { id: 'child-a1', label: '抓取 slots 章节', mode: 'one-shot', createdAt: Date.now() - 30000 },
-    ] } },
-  },
-}
-const page = render(ShoalTab({
-  ctx: { sessions: { list: { getSnapshot: () => fakeList, subscribe: () => () => {} } } },
-  scope: { sessionId: 'child-a1' },
-}))
-
-const [rootBlock, listBlock] = page.props.children
-const rootTitle = rootBlock.props.children[1].props.children[0].props.children
-const rootSub = rootBlock.props.children[1].props.children[1].props.children
-const rows = listBlock.props.children
-
-equal('walks up to the root from a nested subagent', rootTitle, '主会话 · 做一个 DSH 小鱼插件')
-equal('root line counts the whole tree', rootSub, '3 个子代理 · 1 个在跑')
-equal('renders one row per subagent, at every depth', Array.isArray(rows) ? rows.length : -1, 3)
-// Depth-first: a parent is followed by its own children, then its siblings.
-equal('row 1 is the first child, at depth 0', rows[0].props.style.paddingLeft, '14px')
-equal('row 2 is that child\'s own child, one level deeper', rows[1].props.style.paddingLeft, '32px')
-equal('row 3 is back out at depth 0', rows[2].props.style.paddingLeft, '14px')
-equal('row 1 label', rows[0].props.children[1].props.children[0].props.children, '调研 DSH 插件开发文档')
-equal('row 2 label', rows[1].props.children[1].props.children[0].props.children, '抓取 slots 章节')
-equal('row 3 label', rows[2].props.children[1].props.children[0].props.children, '把插件装进 web profile')
-equal('running subagent is marked running', rows[0].props.children[0].props['data-state'], 'running')
-equal('finished subagent is not', rows[1].props.children[0].props['data-state'], 'done')
-check('every row carries a real fish', rows.every((row) => row.props.children[0].props.dangerouslySetInnerHTML.__html.includes('fish-body')))
-
-const emptyPage = render(ShoalTab({
-  ctx: { sessions: { list: { getSnapshot: () => ({ byId: { solo: { id: 'solo', displayTitle: '孤单会话', running: false } }, projectionsBySession: {} }), subscribe: () => () => {} } } },
-  scope: { sessionId: 'solo' },
-}))
-check('an agent with no subagents renders an empty state', emptyPage.props.children[1].props.children.includes('还没有派出过子代理'))
-
-// ---------------------------------------------------------------------------
+console.log('\nE · subagent row decorator')
+check('the row decorator is in the shipped bundle', bundleSource.includes('installSidebarRowFish'))
+check('it anchors on ARIA, not on hashed class names', bundleSource.includes('[role="treeitem"][aria-level]'))
+check('it still requires the subagent-only label element', bundleSource.includes('_subagentLabel'))
+check('it gives up instead of scanning forever', bundleSource.includes('MAX_EMPTY_SCANS'))
+check('it cleans up after itself on unload', bundleSource.includes('disposed = true'))
 // Identity: the whole point is that it is stable and spread out.
 // ---------------------------------------------------------------------------
 console.log('\nidentity (through the rendered surface)')
