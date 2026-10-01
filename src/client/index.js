@@ -39,9 +39,9 @@ function registerSubagentTabTitles(ctx) {
  *
  * @param ctx - 客户端 cordis 上下文。
  */
-function registerSidebarRows(ctx) {
+function registerRowFish(ctx) {
   ctx.inject(['betterSidebar'], (scope) => {
-    scope.effect(() => installSidebarRowFish(scope), 'subagent-fish: sidebar subagent rows')
+    scope.effect(() => installRowFish(scope), 'subagent-fish: row fish')
   })
 }
 
@@ -52,5 +52,5 @@ function registerSidebarRows(ctx) {
 function apply(ctx) {
   installFishCss()
   registerSubagentTabTitles(ctx)
-  registerSidebarRows(ctx)
+  registerRowFish(ctx)
 }
