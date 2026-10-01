@@ -68,6 +68,41 @@ h2{font-size:13px;font-weight:400;color:#8b8b93;margin:0 0 10px}
     <div role="tree" id="subagents">${rowHtml}</div>
   </div>
   <div class="tree">
+    <h2>智能体团队面板（成员行也该有鱼）</h2>
+    <div data-team-action>
+      <div class="VoX2oq_panel">
+        <section>
+          <h3>成员</h3>
+          <div class="VoX2oq_roster">
+            <button type="button" class="VoX2oq_member">
+              <span class="VoX2oq_memberDot"></span>
+              <span class="VoX2oq_memberText">
+                <span class="VoX2oq_memberName"><span class="VoX2oq_memberNameText">成员甲</span></span>
+                <small>进行中 · some-model</small>
+              </span>
+            </button>
+            <button type="button" class="VoX2oq_member">
+              <span class="VoX2oq_memberDot"></span>
+              <span class="VoX2oq_memberText">
+                <span class="VoX2oq_memberName"><span class="VoX2oq_memberNameText">成员乙</span></span>
+                <small>空闲 · some-model</small>
+              </span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <div class="tree">
+    <h2>诱饵：长得像成员行、但在团队面板外（必须不动）</h2>
+    <button type="button" class="VoX2oq_member" id="strayMember">
+      <span class="VoX2oq_memberDot"></span>
+      <span class="VoX2oq_memberText">
+        <span class="VoX2oq_memberName"><span class="VoX2oq_memberNameText">成员甲</span></span>
+      </span>
+    </button>
+  </div>
+  <div class="tree">
     <h2>诱饵：文件树的行（必须原样不动）</h2>
     <div role="tree" id="files">
       <div role="treeitem" aria-level="1" class="wxwsGW_fileRow" aria-label="README.md">
@@ -100,6 +135,8 @@ var list = {
     'c-docs': { id: 'c-docs', displayTitle: '子代理 · 调研 DSH 插件开发文档', parentId: 'root', origin: 'subagent', running: true },
     'c-docs-1': { id: 'c-docs-1', displayTitle: '抓取 slots 章节', parentId: 'c-docs', origin: 'subagent', running: false },
     'c-install': { id: 'c-install', displayTitle: '把插件装进 web profile', parentId: 'root', origin: 'subagent', running: false },
+    'm-one': { id: 'm-one', displayTitle: '成员甲', running: true },
+    'm-two': { id: 'm-two', displayTitle: '成员乙', running: false },
   },
   projectionsBySession: {
     root: { state: 'ready', error: null, values: { subagentCatalog: [
@@ -109,6 +146,10 @@ var list = {
     'c-docs': { state: 'ready', error: null, values: { subagentCatalog: [
       { id: 'c-docs-1', createdAt: now - 10000, mode: 'one-shot', label: '抓取 slots 章节' },
     ] } },
+    lead: { state: 'ready', error: null, values: { agentTeam: { members: [
+      { id: 'm-one', name: '成员甲', phase: 'active' },
+      { id: 'm-two', name: '成员乙', phase: 'active' },
+    ] } } },
   },
 };
 captured.exports.apply({
@@ -164,6 +205,13 @@ setTimeout(function () {
     animatedFish: document.querySelectorAll('#subagents svg.fish-swim[data-fish-id]').length,
     decoyRows: document.querySelectorAll('#files [role="treeitem"][aria-level]').length,
     decoyTouched: document.querySelectorAll('#files .dsf-row-fish').length,
+    teamRows: document.querySelectorAll('[data-team-action] button[class*="_member"]').length,
+    teamFish: Array.prototype.map.call(
+      document.querySelectorAll('[data-team-action] .dsf-row-fish'), function (el) {
+        return { id: el.parentElement.getAttribute('dsfFishId'),
+                 state: el.getAttribute('data-dsf-state'),
+                 swims: el.querySelector('svg.fish-swim[data-fish-id]') !== null } }),
+    strayMemberTouched: document.querySelectorAll('#strayMember .dsf-row-fish').length,
     fishIds: Array.prototype.map.call(document.querySelectorAll('#subagents .dsf-row-fish'), function (el) {
       return el.parentElement.getAttribute('dsfFishId') }),
     rafCallsAfterFirstPaint: rafCalls,
